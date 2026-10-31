@@ -15,11 +15,14 @@ display fades to red; click it again and colours come back.
 
 ## Install
 
-You need a Mac on macOS 13 or later and access to this repository.
+You need a Mac on macOS 13 or later, and an accepted invite to this
+repository (check your GitHub notifications or email).
 
 ```bash
 xcode-select --install          # Apple's command line tools, once (no full Xcode needed)
-git clone git@github.com:unlux/ember.git ~/code/ember
+brew install gh                 # GitHub's command line tool (or download it from cli.github.com)
+gh auth login                   # sign in to GitHub in your browser, once
+gh repo clone unlux/ember ~/code/ember
 cd ~/code/ember && scripts/install.sh
 ```
 
