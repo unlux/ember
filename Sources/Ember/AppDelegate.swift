@@ -17,8 +17,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         handleTerminationSignals()
 
-        let controller = EmberController(defaults: .standard, gamma: gamma)
-        let statusItem = StatusItemController(controller: controller)
+        let loaded = ConfigFile.load()
+        let controller = EmberController(config: loaded.config, defaults: .standard, gamma: gamma)
+        let statusItem = StatusItemController(controller: controller, configProblem: loaded.problem)
         controller.onChange = { [weak statusItem] in statusItem?.refresh() }
         displayEvents = DisplayEvents(
             onDisplaysChanged: { [weak self] in self?.gamma.reapplyFromScratch() },

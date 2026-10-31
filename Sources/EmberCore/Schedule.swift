@@ -11,6 +11,16 @@ public struct ClockTime: Equatable, Sendable {
         self.minute = minute
     }
 
+    /// Parses 24-hour "HH:MM", such as "07:00" or "21:30".
+    public init?(parsing text: String) {
+        let parts = text.split(separator: ":", omittingEmptySubsequences: false)
+        guard parts.count == 2, parts[1].count == 2,
+              let hour = Int(parts[0]), let minute = Int(parts[1]),
+              (0..<24).contains(hour), (0..<60).contains(minute)
+        else { return nil }
+        self.init(hour, minute)
+    }
+
     var minuteOfDay: Int { hour * 60 + minute }
 }
 
@@ -20,6 +30,16 @@ public enum Weekday: Int, Sendable, CaseIterable {
     case sunday = 1, monday, tuesday, wednesday, thursday, friday, saturday
 
     public static let workdays: Set<Weekday> = [.monday, .tuesday, .wednesday, .thursday, .friday]
+
+    /// "mon", "tue" … "sun", as written in config.json.
+    public var shortName: String {
+        ["sun", "mon", "tue", "wed", "thu", "fri", "sat"][rawValue - 1]
+    }
+
+    public init?(shortName: String) {
+        guard let match = Weekday.allCases.first(where: { $0.shortName == shortName.lowercased() }) else { return nil }
+        self = match
+    }
 
     var previous: Weekday { Weekday(rawValue: rawValue == 1 ? 7 : rawValue - 1)! }
 }

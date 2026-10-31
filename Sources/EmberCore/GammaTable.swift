@@ -49,22 +49,3 @@ public struct GammaTable: Equatable, Sendable {
         return GammaTable(red: ramp, green: ramp, blue: ramp)!
     }
 }
-
-/// Per-channel multipliers applied to a display's colour table.
-public struct Tint: Equatable, Sendable {
-    public let red: Float
-    public let green: Float
-    public let blue: Float
-
-    /// Multipliers are clamped to 0...1; NaN becomes 0.
-    public init(red: Float, green: Float, blue: Float) {
-        func clamp(_ value: Float) -> Float { value.isNaN ? 0 : min(max(value, 0), 1) }
-        self.red = clamp(red)
-        self.green = clamp(green)
-        self.blue = clamp(blue)
-    }
-
-    /// Red at full strength, green and blue removed: white becomes pure red
-    /// and the screen emits no blue or green light.
-    public static let night = Tint(red: 1, green: 0, blue: 0)
-}

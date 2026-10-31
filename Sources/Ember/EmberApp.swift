@@ -4,6 +4,9 @@ import AppKit
 enum EmberApp {
     @MainActor
     static func main() {
+        if CommandLine.arguments.contains("--check-config") {
+            exit(ConfigFile.check())
+        }
         let app = NSApplication.shared
         let delegate = AppDelegate()
         app.delegate = delegate

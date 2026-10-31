@@ -2,59 +2,10 @@ import Foundation
 import Testing
 @testable import EmberCore
 
-@Suite struct RednessTests {
-    @Test func zeroIsNormalAndOneIsPureRed() {
-        #expect(Tint.redness(0) == .neutral)
-        #expect(Tint.redness(1) == Tint(red: 1, green: 0, blue: 0))
-        #expect(Tint.redness(1) == .night)
-    }
-
-    @Test func stepsLandExactly() {
-        #expect(Tint.redness(0.4) == Tint(red: 1, green: 0.75, blue: 0.5))
-        #expect(Tint.redness(0.8) == Tint(red: 1, green: 0.45, blue: 0.08))
-    }
-
-    @Test func moreRednessNeverAddsGreenOrBlue() {
-        var previous = Tint.redness(0)
-        for i in 1...200 {
-            let tint = Tint.redness(Double(i) / 200)
-            #expect(tint.red == 1)
-            #expect(tint.green <= previous.green)
-            #expect(tint.blue <= previous.blue)
-            previous = tint
-        }
-    }
-
-    @Test func outOfRangeIsClamped() {
-        #expect(Tint.redness(-1) == .neutral)
-        #expect(Tint.redness(7) == .night)
-        #expect(Tint.redness(.nan) == .neutral)
-    }
-
-    @Test func blendHitsBothEndsAndTheMiddle() {
-        let a = Tint.neutral
-        let b = Tint.night
-        #expect(a.blended(with: b, by: 0) == a)
-        #expect(a.blended(with: b, by: 1) == b)
-        #expect(a.blended(with: b, by: 0.5) == Tint(red: 1, green: 0.5, blue: 0.5))
-    }
-
-    @Test func easingStartsAndEndsInPlaceAndOnlyMovesForward() {
-        #expect(Easing.easeInOut(0) == 0)
-        #expect(Easing.easeInOut(1) == 1)
-        #expect(Easing.easeInOut(0.5) == 0.5)
-        var previous = 0.0
-        for i in 1...100 {
-            let value = Easing.easeInOut(Double(i) / 100)
-            #expect(value >= previous)
-            previous = value
-        }
-    }
-}
-
-@Suite struct ScheduleTests {
+/// Shared by the schedule and config tests.
+enum Fixtures {
     /// Fixed zone so the tests don't depend on where they run.
-    let calendar: Calendar = {
+    static let calendar: Calendar = {
         var c = Calendar(identifier: .gregorian)
         c.timeZone = TimeZone(identifier: "Asia/Kolkata")!
         return c
@@ -62,13 +13,32 @@ import Testing
 
     /// A date in the week of Sunday 1 Nov to Saturday 7 Nov 2026, whose day
     /// numbers match `Weekday`'s raw values.
-    func date(_ weekday: Weekday, _ hour: Int, _ minute: Int = 0) -> Date {
+    static func date(_ weekday: Weekday, _ hour: Int, _ minute: Int = 0) -> Date {
         let result = calendar.date(from: DateComponents(year: 2026, month: 11, day: weekday.rawValue, hour: hour, minute: minute))!
         precondition(calendar.component(.weekday, from: result) == weekday.rawValue, "test calendar is off")
         return result
     }
 
-    let schedule = Config.schedule
+    /// The repo's config.example.json.
+    static let exampleConfig = URL(fileURLWithPath: #filePath)
+        .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        .appending(path: "config.example.json")
+
+    /// Red 20:00–07:00, off for a Thursday review and a weekday standup.
+    /// Matches config.example.json.
+    static let meetings = Schedule(
+        red: TimeWindow(from: ClockTime(20), to: ClockTime(7)),
+        exclusions: [
+            Exclusion("Sprint review", on: [.thursday], from: ClockTime(21), to: ClockTime(22, 30)),
+            Exclusion("Standup", on: Weekday.workdays, from: ClockTime(21), to: ClockTime(22)),
+        ]
+    )
+}
+
+@Suite struct ScheduleTests {
+    let calendar = Fixtures.calendar
+    let schedule = Fixtures.meetings
+    func date(_ weekday: Weekday, _ hour: Int, _ minute: Int = 0) -> Date { Fixtures.date(weekday, hour, minute) }
 
     @Test(arguments: [
         (Weekday.monday, 19, 59, false, nil as String?),

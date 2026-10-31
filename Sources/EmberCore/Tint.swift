@@ -1,4 +1,17 @@
-extension Tint {
+/// Per-channel multipliers applied to a display's colour table.
+public struct Tint: Equatable, Sendable {
+    public let red: Float
+    public let green: Float
+    public let blue: Float
+
+    /// Multipliers are clamped to 0...1; NaN becomes 0.
+    public init(red: Float, green: Float, blue: Float) {
+        func clamp(_ value: Float) -> Float { value.isNaN ? 0 : min(max(value, 0), 1) }
+        self.red = clamp(red)
+        self.green = clamp(green)
+        self.blue = clamp(blue)
+    }
+
     /// No change: every channel at full strength.
     public static let neutral = Tint(red: 1, green: 1, blue: 1)
 
@@ -16,9 +29,9 @@ extension Tint {
         (1.0, 0.000, 0.000),
     ]
 
-    /// The tint for a redness from 0 (normal colours) to 1 (pure red).
-    /// Linear between steps, so green and blue only ever fall as redness
-    /// rises. Out-of-range and NaN values are clamped.
+    /// The tint for a redness from 0 (normal colours) to 1 (pure red: no
+    /// green or blue light at all). Linear between steps, so green and blue
+    /// only ever fall as redness rises. Out-of-range and NaN are clamped.
     public static func redness(_ amount: Double) -> Tint {
         let a = amount.isNaN ? 0 : min(max(amount, 0), 1)
         let steps = rednessSteps

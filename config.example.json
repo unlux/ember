@@ -1,0 +1,8 @@
+{
+  "red": { "from": "20:00", "to": "07:00" },
+  "exclusions": [
+    { "name": "Sprint review", "days": ["thu"], "from": "21:00", "to": "22:30" },
+    { "name": "Standup", "days": ["mon", "tue", "wed", "thu", "fri"], "from": "21:00", "to": "22:00" }
+  ],
+  "fadeSeconds": 0.6
+}

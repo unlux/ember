@@ -3,9 +3,9 @@ import EmberCore
 
 /// Ember's state: whether red is on, how red, and the schedule.
 ///
-/// Schedule rule: Ember acts only when the schedule's answer changes (8 PM,
-/// a meeting starting or ending, 7 AM). A click in between overrides the
-/// schedule until its next change.
+/// Schedule rule: Ember acts only when the schedule's answer changes (red
+/// starting, an exclusion starting or ending, red ending). A click in
+/// between overrides the schedule until its next change.
 @MainActor
 final class EmberController {
     private enum Key {
@@ -14,11 +14,10 @@ final class EmberController {
         static let followsSchedule = "followsSchedule"
     }
 
+    let config: Config
     private let defaults: UserDefaults
     private let gamma: GammaController
     private let fader: Fader
-    private let schedule = Config.schedule
-    private var calendar: Calendar { .current }
 
     private(set) var isRed = false
     private(set) var redness: Double
@@ -33,14 +32,12 @@ final class EmberController {
     /// Called after any change, so the menu-bar icon can update.
     var onChange: (() -> Void)?
 
-    init(defaults: UserDefaults, gamma: GammaController) {
+    init(config: Config, defaults: UserDefaults, gamma: GammaController) {
+        self.config = config
         self.defaults = defaults
         self.gamma = gamma
         self.fader = Fader(gamma: gamma)
-        defaults.register(defaults: [
-            Key.redness: Config.defaultRedness,
-            Key.followsSchedule: true,
-        ])
+        defaults.register(defaults: [Key.redness: 1.0, Key.followsSchedule: true])
         redness = defaults.double(forKey: Key.redness)
         followsSchedule = defaults.bool(forKey: Key.followsSchedule)
     }
@@ -51,14 +48,9 @@ final class EmberController {
         } else if defaults.bool(forKey: Key.red) {
             setRed(true)
         }
-        // Checks every 10 seconds, so a meeting gap starts within 10 s of
-        // its time. Each check is a few integer comparisons.
-        let timer = Timer(timeInterval: 10, repeats: true) { [weak self] _ in
-            MainActor.assumeIsolated { self?.checkSchedule() }
-        }
-        timer.tolerance = 2
-        RunLoop.main.add(timer, forMode: .common)
-        scheduleTimer = timer
+        // Every 10 seconds, so an exclusion starts within 10 s of its time.
+        // Each check is a few integer comparisons.
+        scheduleTimer = repeatingTimer(every: 10, tolerance: 2) { $0.checkSchedule() }
 
         let center = NotificationCenter.default
         for name in [Notification.Name.NSSystemClockDidChange, .NSSystemTimeZoneDidChange] {
@@ -83,7 +75,7 @@ final class EmberController {
     func setRed(_ on: Bool, animated: Bool = true) {
         isRed = on
         defaults.set(on, forKey: Key.red)
-        fader.fade(to: on ? .redness(redness) : nil, duration: animated ? Config.fadeDuration : 0)
+        fader.fade(to: on ? .redness(redness) : nil, duration: animated ? config.fadeSeconds : 0)
         if on { startWatchdog() } else { stopWatchdog() }
         onChange?()
     }
@@ -116,60 +108,46 @@ final class EmberController {
         gamma.enforce()
     }
 
-    func checkSchedule() {
+    /// The next time the schedule switches red on or off, for the menu.
+    func nextScheduledChange() -> Schedule.Change? {
+        guard followsSchedule else { return nil }
+        return config.schedule.nextChange(after: Date(), calendar: .current)
+    }
+
+    private func checkSchedule() {
         guard followsSchedule else { return }
-        let scheduled = schedule.state(at: Date(), calendar: calendar).isRed
+        let scheduled = config.schedule.state(at: Date(), calendar: .current).isRed
         guard scheduled != lastScheduledRed else { return }
         lastScheduledRed = scheduled
         if scheduled != isRed { setRed(scheduled) }
     }
-
-    // MARK: - Text for the menu
-
-    var scheduleSummary: String {
-        "Red \(format(schedule.red.start)) – \(format(schedule.red.end))"
-    }
-
-    var nextChangeDescription: String? {
-        guard followsSchedule, let change = schedule.nextChange(after: Date(), calendar: calendar) else { return nil }
-        let when = describe(change.date)
-        if change.state.isRed { return "Next: red on \(when)" }
-        if let meeting = change.state.exclusion { return "Next: off \(when) for \(meeting)" }
-        return "Next: off \(when)"
-    }
-
-    private func format(_ time: ClockTime) -> String {
-        var parts = calendar.dateComponents([.year, .month, .day], from: Date())
-        parts.hour = time.hour
-        parts.minute = time.minute
-        guard let date = calendar.date(from: parts) else { return "\(time.hour):\(time.minute)" }
-        return date.formatted(date: .omitted, time: .shortened)
-    }
-
-    private func describe(_ date: Date) -> String {
-        let time = date.formatted(date: .omitted, time: .shortened)
-        if calendar.isDateInToday(date) { return "at \(time)" }
-        if calendar.isDateInTomorrow(date) { return "tomorrow at \(time)" }
-        return "\(date.formatted(.dateTime.weekday(.wide))) at \(time)"
-    }
-
-    // MARK: - Watchdog
 
     /// While red is on, check every few seconds that every display still
     /// shows it (after sleep, a monitor reconnect, a display glitch) and put
     /// it back if not. Reads only; writes only on a mismatch.
     private func startWatchdog() {
         stopWatchdog()
-        let timer = Timer(timeInterval: 3, repeats: true) { [weak self] _ in
-            MainActor.assumeIsolated { self?.gamma.enforce() }
-        }
-        timer.tolerance = 1
-        RunLoop.main.add(timer, forMode: .common)
-        watchdog = timer
+        watchdog = repeatingTimer(every: 3, tolerance: 1) { $0.gamma.enforce() }
     }
 
     private func stopWatchdog() {
         watchdog?.invalidate()
         watchdog = nil
+    }
+
+    /// A main-thread timer that also runs while the menu is open.
+    private func repeatingTimer(
+        every interval: TimeInterval,
+        tolerance: TimeInterval,
+        _ action: @escaping @MainActor (EmberController) -> Void
+    ) -> Timer {
+        let timer = Timer(timeInterval: interval, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated {
+                if let self { action(self) }
+            }
+        }
+        timer.tolerance = tolerance
+        RunLoop.main.add(timer, forMode: .common)
+        return timer
     }
 }

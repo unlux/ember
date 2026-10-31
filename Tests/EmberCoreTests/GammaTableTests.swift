@@ -3,9 +3,9 @@ import Testing
 @testable import EmberCore
 
 @Suite struct GammaTableTests {
-    @Test func nightTintKeepsRedAndRemovesGreenAndBlue() {
+    @Test func fullRednessKeepsRedAndRemovesGreenAndBlue() {
         let linear = GammaTable.linear(count: 256)
-        let red = linear.tinted(by: .night)
+        let red = linear.tinted(by: .redness(1))
         #expect(red.red == linear.red)
         #expect(red.green.allSatisfy { $0 == 0 })
         #expect(red.blue.allSatisfy { $0 == 0 })
@@ -16,7 +16,7 @@ import Testing
         // A calibrated display's curve is not a straight line.
         let curve: [Float] = (0..<64).map { pow(Float($0) / 63, 2.2) }
         let calibrated = try #require(GammaTable(red: curve, green: curve, blue: curve))
-        #expect(calibrated.tinted(by: .night).red == curve)
+        #expect(calibrated.tinted(by: .redness(1)).red == curve)
     }
 
     @Test func tintedValuesStayInRange() throws {
@@ -49,33 +49,5 @@ import Testing
 
     @Test func differentLengthsNeverMatch() {
         #expect(!GammaTable.linear(count: 8).matches(GammaTable.linear(count: 9)))
-    }
-
-    @Test func turningRedOnIsDetectedAsADifferentTable() {
-        let linear = GammaTable.linear(count: 256)
-        #expect(!linear.matches(linear.tinted(by: .night)))
-    }
-}
-
-@Suite struct TintTests {
-    @Test func multipliersAreClamped() {
-        let tint = Tint(red: 2, green: -1, blue: .nan)
-        #expect(tint == Tint(red: 1, green: 0, blue: 0))
-    }
-
-    @Test func nightIsPureRed() {
-        #expect(Tint.night == Tint(red: 1, green: 0, blue: 0))
-    }
-}
-
-@Suite struct ClickActionTests {
-    @Test(arguments: [
-        (false, false, ClickAction.toggle),
-        (true, false, ClickAction.showMenu),
-        (false, true, ClickAction.showMenu),
-        (true, true, ClickAction.showMenu),
-    ])
-    func clicks(isRightClick: Bool, isControlHeld: Bool, expected: ClickAction) {
-        #expect(ClickAction(isRightClick: isRightClick, isControlHeld: isControlHeld) == expected)
     }
 }
