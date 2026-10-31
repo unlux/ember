@@ -20,9 +20,21 @@ enum LoginItem {
     /// Turns Open at Login on the first time the installed app runs. After
     /// that the user's choice in the menu wins.
     static func enableOnFirstLaunch(_ defaults: UserDefaults) {
-        guard isInstalled, !defaults.bool(forKey: configuredKey) else { return }
-        setEnabled(true)
-        defaults.set(true, forKey: configuredKey)
+        if isInstalled, !defaults.bool(forKey: configuredKey) {
+            setEnabled(true)
+            defaults.set(true, forKey: configuredKey)
+        }
+        log.notice("Open at Login status: \(describe(status), privacy: .public)")
+    }
+
+    private static func describe(_ status: SMAppService.Status) -> String {
+        switch status {
+        case .enabled: "enabled"
+        case .requiresApproval: "needs approval in System Settings"
+        case .notRegistered: "off"
+        case .notFound: "not found"
+        @unknown default: "unknown (\(status.rawValue))"
+        }
     }
 
     static func setEnabled(_ enabled: Bool) {
