@@ -13,6 +13,7 @@ rm -rf build
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$BIN" "$APP/Contents/MacOS/Ember"
 cp Resources/Info.plist "$APP/Contents/Info.plist"
+cp Resources/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
 
 # Build number = commit count, so each install is distinguishable.
 BUILD_NUMBER=$(git rev-list --count HEAD 2>/dev/null || echo 1)

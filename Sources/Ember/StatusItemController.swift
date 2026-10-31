@@ -6,25 +6,33 @@ import ServiceManagement
 /// opens the menu.
 @MainActor
 final class StatusItemController: NSObject {
+    private let controller: EmberController
     private let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
     private let menu = NSMenu()
     private let redItem = NSMenuItem(title: "Red Screen", action: #selector(toggleRed), keyEquivalent: "")
+    private let sliderItem = NSMenuItem()
+    private lazy var slider = RednessSlider { [weak self] value in self?.controller.setRedness(value) }
+    private let scheduleItem = NSMenuItem(title: "Follow Schedule", action: #selector(toggleSchedule), keyEquivalent: "")
+    private let summaryItem = NSMenuItem()
+    private let nextItem = NSMenuItem()
     private let loginItem = NSMenuItem(title: "Open at Login", action: #selector(toggleLogin), keyEquivalent: "")
-    private let onToggle: () -> Void
 
-    var isRed = false {
-        didSet { updateIcon() }
-    }
-
-    init(onToggle: @escaping () -> Void) {
-        self.onToggle = onToggle
+    init(controller: EmberController) {
+        self.controller = controller
         super.init()
 
-        redItem.target = self
-        loginItem.target = self
+        sliderItem.view = slider
+        for info in [summaryItem, nextItem] {
+            info.isEnabled = false
+            info.indentationLevel = 1
+        }
         let quitItem = NSMenuItem(title: "Quit Ember", action: #selector(quit), keyEquivalent: "q")
-        quitItem.target = self
-        menu.items = [redItem, loginItem, .separator(), quitItem]
+        for menuItem in [redItem, scheduleItem, loginItem, quitItem] { menuItem.target = self }
+        menu.items = [
+            redItem, sliderItem, .separator(),
+            scheduleItem, summaryItem, nextItem, .separator(),
+            loginItem, quitItem,
+        ]
 
         if let button = item.button {
             button.target = self
@@ -32,7 +40,19 @@ final class StatusItemController: NSObject {
             button.sendAction(on: [.leftMouseUp, .rightMouseUp])
             button.toolTip = "Ember: click to turn the screen red. Right-click for options."
         }
-        updateIcon()
+        refresh()
+    }
+
+    /// Updates the icon. Called by the controller after every change.
+    func refresh() {
+        let isRed = controller.isRed
+        let image = NSImage(
+            systemSymbolName: isRed ? "moon.fill" : "moon",
+            accessibilityDescription: isRed ? "Ember, red on" : "Ember, red off"
+        )
+        image?.isTemplate = true
+        item.button?.image = image
+        redItem.state = isRed ? .on : .off
     }
 
     @objc private func clicked() {
@@ -42,13 +62,24 @@ final class StatusItemController: NSObject {
             isControlHeld: event?.modifierFlags.contains(.control) ?? false
         )
         switch action {
-        case .toggle: onToggle()
+        case .toggle: controller.toggle()
         case .showMenu: showMenu()
         }
     }
 
     private func showMenu() {
-        redItem.state = isRed ? .on : .off
+        redItem.state = controller.isRed ? .on : .off
+        slider.value = controller.redness
+
+        scheduleItem.state = controller.followsSchedule ? .on : .off
+        summaryItem.title = controller.scheduleSummary
+        if let next = controller.nextChangeDescription {
+            nextItem.title = next
+            nextItem.isHidden = false
+        } else {
+            nextItem.isHidden = true
+        }
+
         switch LoginItem.status {
         case .enabled:
             loginItem.title = "Open at Login"
@@ -70,16 +101,9 @@ final class StatusItemController: NSObject {
         item.menu = nil
     }
 
-    private func updateIcon() {
-        let image = NSImage(
-            systemSymbolName: isRed ? "moon.fill" : "moon",
-            accessibilityDescription: isRed ? "Ember, red on" : "Ember, red off"
-        )
-        image?.isTemplate = true
-        item.button?.image = image
-    }
+    @objc private func toggleRed() { controller.toggle() }
 
-    @objc private func toggleRed() { onToggle() }
+    @objc private func toggleSchedule() { controller.setFollowsSchedule(!controller.followsSchedule) }
 
     @objc private func toggleLogin() {
         switch LoginItem.status {

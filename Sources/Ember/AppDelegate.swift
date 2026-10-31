@@ -3,13 +3,10 @@ import EmberCore
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
-    private static let redKey = "redEnabled"
-
-    private let defaults = UserDefaults.standard
     private let gamma = GammaController()
+    private var controller: EmberController?
     private var statusItem: StatusItemController?
     private var displayEvents: DisplayEvents?
-    private var watchdog: Timer?
     private var signalSources: [any DispatchSourceSignal] = []
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -19,54 +16,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if isAnotherCopyRunning() { exit(0) }
 
         handleTerminationSignals()
-        statusItem = StatusItemController(onToggle: { [weak self] in self?.toggle() })
+
+        let controller = EmberController(defaults: .standard, gamma: gamma)
+        let statusItem = StatusItemController(controller: controller)
+        controller.onChange = { [weak statusItem] in statusItem?.refresh() }
         displayEvents = DisplayEvents(
             onDisplaysChanged: { [weak self] in self?.gamma.reapplyFromScratch() },
-            onWake: { [weak self] in self?.gamma.enforce() }
+            onWake: { [weak controller] in controller?.handleWake() }
         )
-        LoginItem.enableOnFirstLaunch(defaults)
-
-        // Come back the way the user left it.
-        if defaults.bool(forKey: Self.redKey) { setRed(true) }
+        LoginItem.enableOnFirstLaunch(.standard)
+        self.controller = controller
+        self.statusItem = statusItem
+        controller.start()
     }
 
     func applicationWillTerminate(_ notification: Notification) {
         // macOS would undo the tables on exit anyway; restoring here makes
         // the screen return to normal before the process is gone.
-        gamma.turnOff()
-    }
-
-    private func toggle() {
-        setRed(!gamma.isOn)
-    }
-
-    private func setRed(_ on: Bool) {
-        if on {
-            gamma.turnOn(.night)
-            startWatchdog()
-        } else {
-            stopWatchdog()
-            gamma.turnOff()
-        }
-        defaults.set(on, forKey: Self.redKey)
-        statusItem?.isRed = on
-    }
-
-    /// While red is on, check every few seconds that no one has reset the
-    /// colour tables (Night Shift, another colour app, a display glitch) and
-    /// put red back if they have. Reads only; writes only on a mismatch.
-    private func startWatchdog() {
-        stopWatchdog()
-        let timer = Timer.scheduledTimer(withTimeInterval: 3, repeats: true) { [weak self] _ in
-            MainActor.assumeIsolated { self?.gamma.enforce() }
-        }
-        timer.tolerance = 1
-        watchdog = timer
-    }
-
-    private func stopWatchdog() {
-        watchdog?.invalidate()
-        watchdog = nil
+        controller?.shutdown()
     }
 
     /// `kill`, Ctrl-C and logout send these. Route them through a normal quit.
