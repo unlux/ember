@@ -15,8 +15,8 @@ public struct ClockTime: Equatable, Sendable {
     public init?(parsing text: String) {
         let parts = text.split(separator: ":", omittingEmptySubsequences: false)
         guard parts.count == 2, parts[1].count == 2,
-              let hour = Int(parts[0]), let minute = Int(parts[1]),
-              (0..<24).contains(hour), (0..<60).contains(minute)
+            let hour = Int(parts[0]), let minute = Int(parts[1]),
+            (0..<24).contains(hour), (0..<60).contains(minute)
         else { return nil }
         self.init(hour, minute)
     }
@@ -27,7 +27,8 @@ public struct ClockTime: Equatable, Sendable {
 /// Calendar weekday numbers, as `Calendar.component(.weekday, ...)` returns
 /// them for the Gregorian calendar.
 public enum Weekday: Int, Sendable, CaseIterable {
-    case sunday = 1, monday, tuesday, wednesday, thursday, friday, saturday
+    case sunday = 1
+    case monday, tuesday, wednesday, thursday, friday, saturday
 
     public static let workdays: Set<Weekday> = [.monday, .tuesday, .wednesday, .thursday, .friday]
 

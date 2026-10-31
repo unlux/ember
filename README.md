@@ -1,5 +1,7 @@
 # Ember
 
+[![CI](https://github.com/unlux/ember/actions/workflows/ci.yml/badge.svg)](https://github.com/unlux/ember/actions/workflows/ci.yml)
+
 A menu-bar app for late-night work. Click the moon in the menu bar and every
 display fades to red; click it again and colours come back.
 
@@ -15,14 +17,11 @@ display fades to red; click it again and colours come back.
 
 ## Install
 
-You need a Mac on macOS 13 or later, and an accepted invite to this
-repository (check your GitHub notifications or email).
+You need a Mac on macOS 13 or later.
 
 ```bash
 xcode-select --install          # Apple's command line tools, once (no full Xcode needed)
-brew install gh                 # GitHub's command line tool (or download it from cli.github.com)
-gh auth login                   # sign in to GitHub in your browser, once
-gh repo clone unlux/ember ~/code/ember
+git clone https://github.com/unlux/ember.git ~/code/ember
 cd ~/code/ember && scripts/install.sh
 ```
 
@@ -83,5 +82,12 @@ built-in screen (Apple bugs FB18559786, FB19136488, FB22273730). Turning
 off automatic brightness in System Settings > Displays helps on many of
 them. External monitors have not been affected.
 
-Credits for the icon and colour steps are in `THIRD_PARTY_NOTICES.md`.
-Working on the code: see `AGENTS.md`.
+## Contributing
+
+Pull requests are welcome; see [CONTRIBUTING.md](CONTRIBUTING.md). Coding
+agents: start with [AGENTS.md](AGENTS.md).
+
+## Licence
+
+[MIT](LICENSE). Credits for the icon and colour steps are in
+[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

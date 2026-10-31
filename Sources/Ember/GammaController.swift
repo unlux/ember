@@ -83,7 +83,9 @@ final class GammaController {
     private func write(_ table: GammaTable, to display: Display) {
         let result = display.write(table)
         if result != .success {
-            log.error("CGSetDisplayTransferByTable failed (\(result.rawValue, privacy: .public)) on display \(display.id, privacy: .public)")
+            log.error(
+                "CGSetDisplayTransferByTable failed (\(result.rawValue, privacy: .public)) on display \(display.id, privacy: .public)"
+            )
         }
     }
 }

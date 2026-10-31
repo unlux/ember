@@ -1,5 +1,5 @@
-import Foundation
 import EmberCore
+import Foundation
 
 /// Moves the screen from its current tint to a new one over a short time.
 @MainActor

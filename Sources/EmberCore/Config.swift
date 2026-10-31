@@ -56,7 +56,7 @@ public struct Config: Equatable, Sendable {
             // `is Bool` would also match the numbers 0 and 1, so ask
             // CoreFoundation whether it's a real JSON true/false.
             guard let number = value as? NSNumber, CFGetTypeID(number) != CFBooleanGetTypeID(),
-                  (0...10).contains(number.doubleValue)
+                (0...10).contains(number.doubleValue)
             else { throw ConfigError("fadeSeconds: must be a number from 0 to 10") }
             fadeSeconds = number.doubleValue
         }
@@ -101,7 +101,9 @@ public struct Config: Equatable, Sendable {
     }
 
     private static func time(_ value: Any?, at path: String) throws -> ClockTime {
-        guard let text = value as? String else { throw ConfigError("\(path): missing; use 24-hour time like \"21:30\"") }
+        guard let text = value as? String else {
+            throw ConfigError("\(path): missing; use 24-hour time like \"21:30\"")
+        }
         guard let time = ClockTime(parsing: text) else {
             throw ConfigError("\(path): \"\(text)\" is not a 24-hour time like \"21:30\"")
         }
@@ -111,7 +113,8 @@ public struct Config: Equatable, Sendable {
     private static func requireOnly(_ allowed: Set<String>, in object: [String: Any], at path: String) throws {
         if let unknown = object.keys.sorted().first(where: { !allowed.contains($0) }) {
             let place = path.isEmpty ? "" : "\(path): "
-            throw ConfigError("\(place)unknown key \"\(unknown)\"; allowed: \(allowed.sorted().joined(separator: ", "))")
+            throw ConfigError(
+                "\(place)unknown key \"\(unknown)\"; allowed: \(allowed.sorted().joined(separator: ", "))")
         }
     }
 }

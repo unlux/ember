@@ -54,9 +54,10 @@ final class EmberController {
 
         let center = NotificationCenter.default
         for name in [Notification.Name.NSSystemClockDidChange, .NSSystemTimeZoneDidChange] {
-            clockObservers.append(center.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
-                MainActor.assumeIsolated { self?.checkSchedule() }
-            })
+            clockObservers.append(
+                center.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
+                    MainActor.assumeIsolated { self?.checkSchedule() }
+                })
         }
     }
 

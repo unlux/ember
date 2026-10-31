@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+
 @testable import EmberCore
 
 /// Shared by the schedule and config tests.
@@ -14,7 +15,8 @@ enum Fixtures {
     /// A date in the week of Sunday 1 Nov to Saturday 7 Nov 2026, whose day
     /// numbers match `Weekday`'s raw values.
     static func date(_ weekday: Weekday, _ hour: Int, _ minute: Int = 0) -> Date {
-        let result = calendar.date(from: DateComponents(year: 2026, month: 11, day: weekday.rawValue, hour: hour, minute: minute))!
+        let result = calendar.date(
+            from: DateComponents(year: 2026, month: 11, day: weekday.rawValue, hour: hour, minute: minute))!
         precondition(calendar.component(.weekday, from: result) == weekday.rawValue, "test calendar is off")
         return result
     }

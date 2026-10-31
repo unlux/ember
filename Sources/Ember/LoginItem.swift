@@ -45,7 +45,9 @@ enum LoginItem {
                 try SMAppService.mainApp.unregister()
             }
         } catch {
-            log.error("Open at Login \(enabled ? "on" : "off", privacy: .public) failed: \(error.localizedDescription, privacy: .public)")
+            log.error(
+                "Open at Login \(enabled ? "on" : "off", privacy: .public) failed: \(error.localizedDescription, privacy: .public)"
+            )
         }
     }
 }

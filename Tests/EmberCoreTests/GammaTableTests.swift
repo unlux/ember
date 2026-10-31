@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+
 @testable import EmberCore
 
 @Suite struct GammaTableTests {
@@ -43,7 +44,8 @@ import Testing
         func bumped(_ c: [Float], _ name: String) -> [Float] {
             name == channel ? c.enumerated().map { $0.offset == 7 ? $0.element - 0.01 : $0.element } : c
         }
-        let b = try #require(GammaTable(red: bumped(a.red, "red"), green: bumped(a.green, "green"), blue: bumped(a.blue, "blue")))
+        let b = try #require(
+            GammaTable(red: bumped(a.red, "red"), green: bumped(a.green, "green"), blue: bumped(a.blue, "blue")))
         #expect(!a.matches(b))
     }
 

@@ -1,4 +1,5 @@
 import Testing
+
 @testable import EmberCore
 
 @Suite struct TintTests {

@@ -40,6 +40,8 @@ agent.
 - macOS restores a process's colour tables when it exits, even on a crash.
   Quitting is always safe; a new feature needs no cleanup path of its own
   beyond `EmberController.shutdown()`.
+- Record changes people will notice in `CHANGELOG.md`; pull request
+  expectations are in `CONTRIBUTING.md`.
 - When adding a third-party asset (icon, curve, code), credit it in
   `THIRD_PARTY_NOTICES.md` with its licence.
 
@@ -50,6 +52,7 @@ before the colour table applies. Check it with the display probe, and ask
 the person to confirm anything visual (menu layout, how a colour looks).
 
 ```bash
+scripts/format.sh                                  # format all Swift files (--check: lint only)
 scripts/test.sh                                    # unit tests
 scripts/install.sh                                 # build, install to /Applications, restart Ember
 swift scripts/show-displays.swift                  # each display: normal, tinted or full red
@@ -58,6 +61,6 @@ pkill -TERM -x Ember; open -a Ember                # restart after editing confi
 /usr/bin/log show --last 5m --info --predicate 'subsystem == "dev.unlux.ember"'
 ```
 
-A change is done when `scripts/test.sh` passes, `scripts/install.sh`
-succeeds, and the probe shows the state you expect. In zsh, `log` is a
-shell builtin; use `/usr/bin/log`.
+A change is done when `scripts/format.sh --check` and `scripts/test.sh`
+pass, `scripts/install.sh` succeeds, and the probe shows the state you
+expect. In zsh, `log` is a shell builtin; use `/usr/bin/log`.

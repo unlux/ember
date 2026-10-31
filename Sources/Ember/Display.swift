@@ -33,7 +33,7 @@ struct Display {
         var blue = red
         var sampleCount: UInt32 = 0
         guard CGGetDisplayTransferByTable(id, capacity, &red, &green, &blue, &sampleCount) == .success,
-              sampleCount > 0
+            sampleCount > 0
         else { return nil }
         let n = Int(sampleCount)
         return GammaTable(red: Array(red.prefix(n)), green: Array(green.prefix(n)), blue: Array(blue.prefix(n)))

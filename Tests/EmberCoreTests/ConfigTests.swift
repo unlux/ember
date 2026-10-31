@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+
 @testable import EmberCore
 
 @Suite struct ConfigTests {
@@ -45,10 +46,19 @@ import Testing
         (#"{ "red": { "from": "8pm", "to": "07:00" } }"#, #"red.from: "8pm" is not a 24-hour time"#),
         (#"{ "red": { "from": "20:00" } }"#, "red.to: missing"),
         (#"{ "red": { "from": "24:00", "to": "07:00" } }"#, "red.from"),
-        (#"{ "exclusions": [ { "name": "X", "days": ["thurs"], "from": "21:00", "to": "22:00" } ] }"#, #"exclusions[0].days: "thurs" is not one of"#),
-        (#"{ "exclusions": [ { "name": "", "days": ["mon"], "from": "21:00", "to": "22:00" } ] }"#, "exclusions[0].name"),
+        (
+            #"{ "exclusions": [ { "name": "X", "days": ["thurs"], "from": "21:00", "to": "22:00" } ] }"#,
+            #"exclusions[0].days: "thurs" is not one of"#
+        ),
+        (
+            #"{ "exclusions": [ { "name": "", "days": ["mon"], "from": "21:00", "to": "22:00" } ] }"#,
+            "exclusions[0].name"
+        ),
         (#"{ "exclusions": [ { "name": "X", "days": [], "from": "21:00", "to": "22:00" } ] }"#, "exclusions[0].days"),
-        (#"{ "exclusions": [ { "name": "X", "days": ["mon"], "from": "21:00", "to": "22:00", "until": "x" } ] }"#, #"exclusions[0]: unknown key "until""#),
+        (
+            #"{ "exclusions": [ { "name": "X", "days": ["mon"], "from": "21:00", "to": "22:00", "until": "x" } ] }"#,
+            #"exclusions[0]: unknown key "until""#
+        ),
         (#"{ "fadeSeconds": 60 }"#, "fadeSeconds: must be a number from 0 to 10"),
     ])
     func badConfigNamesTheProblem(json: String, expected: String) {
@@ -57,17 +67,19 @@ import Testing
     }
 
     @Test func daysAreCaseInsensitive() throws {
-        let config = try parse(#"{ "exclusions": [ { "name": "X", "days": ["Mon", "FRI"], "from": "21:00", "to": "22:00" } ] }"#)
+        let config = try parse(
+            #"{ "exclusions": [ { "name": "X", "days": ["Mon", "FRI"], "from": "21:00", "to": "22:00" } ] }"#)
         #expect(config.schedule.exclusions.first?.days == [.monday, .friday])
     }
 
     @Test func summaryListsEveryRule() throws {
         let summary = try Config.parse(Data(contentsOf: Fixtures.exampleConfig)).summary
-        #expect(summary == """
-            red 20:00–07:00 every day
-            off 21:00–22:30 on thu for Sprint review
-            off 21:00–22:00 on mon,tue,wed,thu,fri for Standup
-            fade 0.6 s
-            """)
+        #expect(
+            summary == """
+                red 20:00–07:00 every day
+                off 21:00–22:30 on thu for Sprint review
+                off 21:00–22:00 on mon,tue,wed,thu,fri for Standup
+                fade 0.6 s
+                """)
     }
 }

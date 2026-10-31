@@ -13,7 +13,8 @@ final class StatusItemController: NSObject {
     private let redItem = NSMenuItem(title: "Red Screen", action: #selector(toggleRed), keyEquivalent: "")
     private let sliderItem = NSMenuItem()
     private lazy var slider = RednessSlider { [weak self] value in self?.controller.setRedness(value) }
-    private let scheduleItem = NSMenuItem(title: "Follow Schedule", action: #selector(toggleSchedule), keyEquivalent: "")
+    private let scheduleItem = NSMenuItem(
+        title: "Follow Schedule", action: #selector(toggleSchedule), keyEquivalent: "")
     private let summaryItem = NSMenuItem()
     private let nextItem = NSMenuItem()
     private let problemItem = NSMenuItem()
